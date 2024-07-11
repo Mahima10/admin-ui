@@ -1,0 +1,27 @@
+table{
+    height: 90vh;
+    width: 95vw;
+    border: 1px solid black;
+}
+
+thead{
+    position: relative;
+}
+.table-body{
+    position: relative;
+}
+
+th, td{
+    background-color: bisque;
+}
+
+td {  
+    color: green;
+}
+
+.pagination-btn {
+    border-radius: 20vw;
+    border: 1px solid;
+    width: 2rem;
+    height: 2rem;
+}
