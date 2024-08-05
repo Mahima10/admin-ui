@@ -10,9 +10,12 @@ const AdminDashboard = () => {
   const [tableRows, setTableRows] = useState([]);
   const [filteredRows, setFilteredRows] = useState([]);
   const [selectedRow, setSelectedRow] = useState([]);
-  const [rowInEditMode, setRowInEditMode] = useState();
+  const [rowInEditMode, setRowInEditMode] = useState(-1);
   const [searchText, setSearchText] = useState(SEARCH_TEXT);
   const [maxPageNumber, setMaxPageNumber] = useState(0);
+  const [page, setPage] = useState(1);
+
+  let editableRow = {};
 
   useEffect(() => {}, [selectedRow]);
 
@@ -33,15 +36,29 @@ const AdminDashboard = () => {
     getData();
   }, []);
 
-  // In Progress
   const editButton = (rowId) => {
     let editMode = rowInEditMode === parseInt(rowId);
-    const handleEdit = (editMode) => {
+    const handleUpdateRow = (editMode) => {
       if (!editMode) {
+        editableRow = filteredRows.find(
+          (row) => parseInt(row.id) === parseInt(rowId)
+        );
         setRowInEditMode(parseInt(rowId));
       } else {
         // save changes
+        console.log("editable row::", editableRow);
         editMode = !editMode;
+        setRowInEditMode(-1);
+        let currentRow = filteredRows.find(
+          (row) => parseInt(row.id) === parseInt(rowId)
+        );
+        Object.keys(editableRow).forEach((key) => {
+          currentRow[key] = editableRow[key];
+        });
+        // const filteredData =
+        setFilteredRows([...filteredRows, currentRow]);
+        console.log("Filtered Rows::", filteredRows);
+        editableRow = {};
       }
     };
 
@@ -49,7 +66,7 @@ const AdminDashboard = () => {
     return (
       <button
         onClick={() => {
-          handleEdit(editMode);
+          handleUpdateRow(editMode);
         }}
       >
         {" "}
@@ -131,7 +148,7 @@ const AdminDashboard = () => {
         </button>
         {Array.from({ length: maxPageNumber }, (_, i) => i + 1).map((elt) => {
           return (
-            <button onClick={() => {}} className="pagination-btn">
+            <button onClick={() => {}} className="pagination-btn" style={elt === page ? {backgroundColor: "lightblue"}: {}} >
               {" "}
               {elt}
             </button>
@@ -149,29 +166,43 @@ const AdminDashboard = () => {
   };
 
   const searchBox = () => {
+    const input = document.getElementById("search_text");
+    input &&
+      input.addEventListener("keypress", (event) => {
+        if (event.key === "Enter") {
+          console.log("enter pressed");
+          event.preventDefault();
+          console.log("event capture::", event.target.value);
+          handleSearchUpdate(event.target.value);
+        }
+      });
+
     const handleSearchUpdate = (text) => {
-      console.log("SEARCH::", text);
-      setSearchText(text);
       text = text.toLowerCase();
-      //TODO: debouncing
       if (text !== "") {
-        const filteredData = filteredRows.filter((row) =>
-          row.name.toLowerCase().includes(text)
+        const filteredData = filteredRows.filter(
+          (row) =>
+            row.name.toLowerCase().includes(text) ||
+            row.role.toLowerCase().includes(text) ||
+            row.email.toLowerCase().includes(text)
         );
         setFilteredRows(filteredData);
       } else {
-        setTimeout(() => {
-          setSearchText(SEARCH_TEXT);
-        }, 1000);
         setFilteredRows(tableRows);
       }
     };
 
+    const handleInputChange = (value) => {
+      if (value === "") setFilteredRows(tableRows);
+      setSearchText(value);
+    };
+
     return (
       <input
+        id="search_text"
         type="search"
         defaultValue={SEARCH_TEXT}
-        onChange={(e) => handleSearchUpdate(e.target.value)}
+        onChange={(e) => handleInputChange(e.target.value)}
         style={{
           display: "flex",
           flexGrow: 1,
@@ -182,11 +213,29 @@ const AdminDashboard = () => {
       />
     );
   };
-  const displayRows = (rowId, data, isEditable = false) => {
+
+  const handleRowValueChange = (rowId, property, value) => {
+    // debouncing
+    if (parseInt(rowId) === rowInEditMode) {
+      let timeoutId;
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        editableRow[property] = value;
+      }, 1000);
+    }
+  };
+
+  const displayRows = (rowId, property, data, isEditable = false) => {
     isEditable = rowInEditMode === parseInt(rowId);
     // isEditable = selectedRow.includes(parseInt(rowId))
     return isEditable ? (
-      <input type="text" name="row-input" alt="table-row" defaultValue={data} />
+      <input
+        type="text"
+        name="row-input"
+        alt="table-row"
+        defaultValue={data}
+        onChange={(e) => handleRowValueChange(rowId, property, e.target.value)}
+      />
     ) : (
       data
     );
@@ -253,9 +302,9 @@ const AdminDashboard = () => {
             return (
               <tr>
                 <td>{getCheckBox(row.id)} </td>
-                <td> {displayRows(row.id, row.name)} </td>
-                <td> {displayRows(row.id, row.email)} </td>
-                <td> {displayRows(row.id, row.role)} </td>
+                <td> {displayRows(row.id, "name", row.name)} </td>
+                <td> {displayRows(row.id, "email", row.email)} </td>
+                <td> {displayRows(row.id, "role", row.role)} </td>
                 <td> {getActions(row.id)} </td>
               </tr>
             );
