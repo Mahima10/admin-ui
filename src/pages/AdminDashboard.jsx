@@ -14,7 +14,6 @@ const AdminDashboard = () => {
   const [searchText, setSearchText] = useState(SEARCH_TEXT);
   const [maxPageNumber, setMaxPageNumber] = useState(0);
   const [page, setPage] = useState(1);
-
   let editableRow = {};
 
   useEffect(() => {}, [selectedRow]);
@@ -140,27 +139,58 @@ const AdminDashboard = () => {
           width: "60rem",
         }}
       >
-        <button onClick={() => {}} className="pagination-btn">
+        <button
+          onClick={() => {
+            setPage(1);
+          }}
+          className="pagination-btn"
+        >
           {"<<"}
         </button>
-        <button onClick={() => {}} className="pagination-btn">
+        <button
+          onClick={() => {
+            page - 1 >= 1 && setPage(page - 1);
+          }}
+          className="pagination-btn"
+        >
           {"<"}
         </button>
         {Array.from({ length: maxPageNumber }, (_, i) => i + 1).map((elt) => {
           return (
-            <button onClick={() => {}} className="pagination-btn" style={elt === page ? {backgroundColor: "lightblue"}: {}} >
+            <button
+              onClick={() => {
+                setPage(elt);
+              }}
+              className="pagination-btn"
+              style={elt === page ? { backgroundColor: "lightblue" } : {}}
+            >
               {" "}
               {elt}
             </button>
           );
         })}
-        <button onClick={() => {}} className="pagination-btn">
+        <button
+          onClick={() => {
+            page + 1 <= maxPageNumber && setPage(page + 1);
+          }}
+          className="pagination-btn"
+        >
           {">"}
         </button>
 
-        <button onClick={() => {}} className="pagination-btn">
+        <button
+          onClick={() => {
+            setPage(maxPageNumber);
+          }}
+          className="pagination-btn"
+        >
           {">>"}
         </button>
+        <div>
+          {" "}
+          Page Records: {(page - 1) * 10}-{(page - 1) * 10 + 10}
+        </div>
+        <div> Total Record Count: {filteredRows.length}</div>
       </div>
     );
   };
@@ -287,6 +317,12 @@ const AdminDashboard = () => {
     );
   };
 
+  const getColor = (row) => {
+    if (selectedRow.includes(parseInt(row.id))) {
+      return "lightgrey";
+    }
+  };
+
   return (
     <>
       {searchBox()}
@@ -298,17 +334,32 @@ const AdminDashboard = () => {
           })}
         </thead>
         <tbody class="table-body">
-          {filteredRows.map((row, id) => {
-            return (
-              <tr>
-                <td>{getCheckBox(row.id)} </td>
-                <td> {displayRows(row.id, "name", row.name)} </td>
-                <td> {displayRows(row.id, "email", row.email)} </td>
-                <td> {displayRows(row.id, "role", row.role)} </td>
-                <td> {getActions(row.id)} </td>
-              </tr>
-            );
-          })}
+          {filteredRows
+            .slice((page - 1) * 10, (page - 1) * 10 + 10)
+            .map((row, id) => {
+              const color = getColor(row);
+              return (
+                <tr>
+                  <td>{getCheckBox(row.id)} </td>
+                  <td style={{ backgroundColor: color }}>
+                    {" "}
+                    {displayRows(row.id, "name", row.name)}{" "}
+                  </td>
+                  <td style={{ backgroundColor: color }}>
+                    {" "}
+                    {displayRows(row.id, "email", row.email)}{" "}
+                  </td>
+                  <td style={{ backgroundColor: color }}>
+                    {" "}
+                    {displayRows(row.id, "role", row.role)}{" "}
+                  </td>
+                  <td style={{ backgroundColor: color }}>
+                    {" "}
+                    {getActions(row.id)}{" "}
+                  </td>
+                </tr>
+              );
+            })}
         </tbody>
       </table>
       {footer()}
